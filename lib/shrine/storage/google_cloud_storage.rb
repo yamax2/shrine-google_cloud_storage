@@ -10,7 +10,7 @@ class Shrine
       # Initialize a Shrine::Storage for GCS allowing for auto-discovery of the Google::Cloud::Storage client.
       # @param [String] project Provide if not using auto discovery
       # @see http://googlecloudplatform.github.io/google-cloud-ruby/#/docs/google-cloud-storage/v1.6.0/guides/authentication#environmentvariables for information on discovery
-      def initialize(project: nil, bucket:, prefix: nil, host: nil, default_acl: nil, object_options: {}, credentials: nil, public: false)
+      def initialize(project: nil, bucket:, prefix: nil, host: nil, default_acl: nil, object_options: {}, credentials: nil, public: false, anonymous: false)
         @project = project
         @bucket = bucket
         @prefix = prefix
@@ -69,7 +69,7 @@ class Shrine
       # URL to the remote file, accepts options for customizing the URL
       def url(id, **options)
         if options.key? :expires
-          signed_url = storage.signed_url(@bucket, object_name(id), **options)
+          signed_url = storage.signed_url(@bucket, object_name(id), version: :v4, **options)
           signed_url.gsub!(/storage.googleapis.com\/#{@bucket}/, @host) if @host
           signed_url
         else
@@ -166,7 +166,12 @@ class Shrine
         opts[:project] = @project if @project
         opts[:credentials] = @credentials if @credentials
 
-        @storage = Google::Cloud::Storage.new(**opts)
+        @storage =
+          if @anonymous
+            Google::Cloud::Storage.anonymous(**opts)
+          else
+            Google::Cloud::Storage.new(**opts)
+          end
       end
 
       def copyable?(io)
