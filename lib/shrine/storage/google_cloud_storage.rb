@@ -10,7 +10,7 @@ class Shrine
       # Initialize a Shrine::Storage for GCS allowing for auto-discovery of the Google::Cloud::Storage client.
       # @param [String] project Provide if not using auto discovery
       # @see http://googlecloudplatform.github.io/google-cloud-ruby/#/docs/google-cloud-storage/v1.6.0/guides/authentication#environmentvariables for information on discovery
-      def initialize(project: nil, bucket:, prefix: nil, host: nil, default_acl: nil, object_options: {}, credentials: nil, public: false, anonymous: false)
+      def initialize(project: nil, bucket:, prefix: nil, host: nil, default_acl: nil, object_options: {}, credentials: nil, public: false, anonymous: false, endpoint: nil)
         @project = project
         @bucket = bucket
         @prefix = prefix
@@ -18,6 +18,8 @@ class Shrine
         @object_options = object_options
         @storage = nil
         @credentials = credentials
+        @anonymous = anonymous
+        @endpoint = endpoint
 
         @default_acl = if public && default_acl && default_acl != "publicRead"
                          raise Shrine::Error, "You can not set both public and default_acl"
@@ -165,6 +167,7 @@ class Shrine
         opts = {}
         opts[:project] = @project if @project
         opts[:credentials] = @credentials if @credentials
+        opts[:endpoint] = @endpoint if @endpoint
 
         @storage =
           if @anonymous
